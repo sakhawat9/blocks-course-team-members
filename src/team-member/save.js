@@ -12,6 +12,7 @@ export default function Save( { attributes } ) {
 					className={ id ? `wp-image-${ id }` : null }
 				/>
 			) }
+
 			{ name && <RichText.Content tagName="h4" value={ name } /> }
 			{ bio && <RichText.Content tagName="p" value={ bio } /> }
 			{ socialLinks.length > 0 && (
