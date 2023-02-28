@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from '@wordpress/element';
+import { useEffect, useState, useRef } from '@wordpress/element';
 import {
 	useBlockProps,
 	RichText,
@@ -19,8 +19,10 @@ import {
 	PanelBody,
 	TextareaControl,
 	SelectControl,
-	Tooltip,
 	Icon,
+	Tooltip,
+	TextControl,
+	Button,
 } from '@wordpress/components';
 
 function Edit( {
@@ -32,9 +34,12 @@ function Edit( {
 } ) {
 	const { name, bio, url, alt, id, socialLinks } = attributes;
 	const [ blobURL, setBlobURL ] = useState();
+	const [ selectedLink, setSelectedLink ] = useState();
+
+	const prevURL = usePrevious( url );
+	const prevIsSelected = usePrevious( isSelected );
 
 	const titleRef = useRef();
-	const prevURL = usePrevious( url );
 
 	const imageObject = useSelect(
 		( select ) => {
@@ -104,6 +109,13 @@ function Edit( {
 		} );
 	};
 
+	const addNewSocialItem = () => {
+		setAttributes( {
+			socialLinks: [ ...socialLinks, { icon: 'wordpress', link: '' } ],
+		} );
+		setSelectedLink( socialLinks.length );
+	};
+
 	useEffect( () => {
 		if ( ! id && isBlobURL( url ) ) {
 			setAttributes( {
@@ -120,13 +132,20 @@ function Edit( {
 			revokeBlobURL( blobURL );
 			setBlobURL();
 		}
-	}, [ blobURL, url ] );
+	}, [ url ] );
 
 	useEffect( () => {
 		if ( url && ! prevURL ) {
 			titleRef.current.focus();
 		}
 	}, [ url, prevURL ] );
+
+	useEffect( () => {
+		if ( prevIsSelected && ! isSelected ) {
+			setSelectedLink();
+		}
+	}, [ isSelected, prevIsSelected ] );
+
 	return (
 		<>
 			<InspectorControls>
@@ -205,12 +224,30 @@ function Edit( {
 					value={ bio }
 					allowedFormats={ [] }
 				/>
+
 				<div className="wp-block-blocks-course-team-member-social-links">
 					<ul>
 						{ socialLinks.map( ( item, index ) => {
 							return (
-								<li key={ index }>
-									<Icon icon={ item.icon } />
+								<li
+									key={ index }
+									className={
+										selectedLink === index
+											? 'is-selected'
+											: null
+									}
+								>
+									<button
+										aria-label={ __(
+											'Edit Social Link',
+											'team-members'
+										) }
+										onClick={ () =>
+											setSelectedLink( index )
+										}
+									>
+										<Icon icon={ item.icon } />
+									</button>
 								</li>
 							);
 						} ) }
@@ -227,6 +264,7 @@ function Edit( {
 											'Add Social Link',
 											'team-members'
 										) }
+										onClick={ addNewSocialItem }
 									>
 										<Icon icon="plus" />
 									</button>
@@ -235,6 +273,13 @@ function Edit( {
 						) }
 					</ul>
 				</div>
+				{ selectedLink !== undefined && (
+					<div className="wp-block-blocks-course-team-member-link-form">
+						<TextControl label={ __( 'Icon', 'text-numbers' ) } />
+						<TextControl label={ __( 'URL', 'text-numbers' ) } />
+						<Button>{ __( 'Remove Link', 'text-numbers' ) }</Button>
+					</div>
+				) }
 			</div>
 		</>
 	);
